@@ -1,7 +1,9 @@
-﻿Imports System.Web.Http
+﻿Imports System.Reflection
+Imports System.Web.Http
 Imports System.Web.Optimization
 Imports OpenTelemetry
 Imports OpenTelemetry.Metrics
+Imports OpenTelemetry.Resources
 Imports OpenTelemetry.Trace
 
 Public Class WebApiApplication
@@ -11,17 +13,25 @@ Public Class WebApiApplication
     Private traceProvider As TracerProvider
 
     Sub Application_Start()
+        Dim assemblyName = Assembly.GetExecutingAssembly()?.GetName()
+        Dim resource = ResourceBuilder.CreateDefault() _
+            .AddService(serviceName:=If(assemblyName.Name, "unknown-service"),
+                serviceNamespace:=ConfigurationManager.AppSettings.Get("environment"),
+                serviceVersion:=If(assemblyName.Version.ToString(), "0.0.0"),
+                autoGenerateServiceInstanceId:=True)
         ' ASP.NET instrumentation requires manual web.config changes
         ' https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNet
         ' OWIN instrumentation requires manual pipeline changes if self-hosted
         ' https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Owin
         meterProvider = Sdk.CreateMeterProviderBuilder() _
+            .SetResourceBuilder(resource) _
             .AddAspNetInstrumentation() _
             .AddHttpClientInstrumentation() _
             .AddOwinInstrumentation() _
             .AddOtlpExporter() _
             .Build()
         traceProvider = Sdk.CreateTracerProviderBuilder() _
+            .SetResourceBuilder(resource) _
             .AddAspNetInstrumentation() _
             .AddHttpClientInstrumentation() _
             .AddOwinInstrumentation() _
