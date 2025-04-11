@@ -19,6 +19,7 @@ Public Class WebApiApplication
                 serviceNamespace:=ConfigurationManager.AppSettings.Get("environment"),
                 serviceVersion:=If(assemblyName.Version.ToString(), "0.0.0"),
                 autoGenerateServiceInstanceId:=True)
+
         ' ASP.NET instrumentation requires manual web.config changes
         ' https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNet
         ' OWIN instrumentation requires manual pipeline changes if self-hosted
